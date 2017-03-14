@@ -16,15 +16,24 @@ import (
 )
 
 type container struct {
-	Host    string
-	Port    string
-	Address string
+	Host       string
+  Port       string
+	ListenPort string
+	Address    string
+  Type       string
 }
 
 type metadata struct {
 	Cluster              string
 	ContainerInstanceArn string
 	Version              string
+}
+
+type containerEnvVars struct {
+  VirtualHost       string
+  VirtualPort       string
+  VirtualType       string
+  VirtualListenPort string
 }
 
 var (

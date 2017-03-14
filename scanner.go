@@ -107,7 +107,12 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if len(s.nameNetworkBindingsMap[*cd.Name]) == 0 {
 		return nil, errors.New("container has no network bindings. skipping")
 	}
-	virtualHost, virtualPort := extractVars(cd.Environment)
+  vars := extractVars(cd.Environment)
+	virtualHost := vars.VirtualHost
+  virtualPort := vars.VirtualPort
+  virtualType := vars.VirtualType
+  virtualListenPort := vars.VirtualListenPort
+
 	if virtualHost == "" {
 		return nil, errors.New("[" + *cd.Name + "] VIRTUAL_HOST environment variable not found. skipping")
 	}
@@ -120,9 +125,17 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if port == "" {
 		return nil, errors.New("[" + *cd.Name + "] no valid port configuration found. skipping")
 	}
+	if virtualType == "" {
+    virtualType = "http"
+  }
+	if virtualListenPort == "" {
+    virtualListenPort = "80"
+  }
 	return &container{
 		Host:    virtualHost,
 		Port:    port,
+    Type:    virtualType,
+    ListenPort:    virtualListenPort,
 		Address: s.idAddressMap[*t.ContainerInstanceArn],
 	}, nil
 }
@@ -136,15 +149,28 @@ func extractHostPort(virtualPort string, nbs []*ecs.NetworkBinding) string {
 	return ""
 }
 
-func extractVars(env []*ecs.KeyValuePair) (string, string) {
+func extractVars(env []*ecs.KeyValuePair) (*containerEnvVars) {
 	virtualHost := ""
 	virtualPort := ""
+	virtualType := ""
+	virtualListenPort := ""
 	for _, e := range env {
-		if strings.ToLower(*e.Name) == "virtual_host" {
-			virtualHost = *e.Value
-		} else if strings.ToLower(*e.Name) == "virtual_port" {
-			virtualPort = *e.Value
-		}
+    envVarName := strings.ToLower(*e.Name)
+    switch {
+      case envVarName == "virtual_host":
+        virtualHost = *e.Value
+      case envVarName == "virtual_port":
+        virtualPort = *e.Value
+      case envVarName == "virtual_type":
+        virtualType = *e.Value
+      case envVarName == "virtual_listen_port":
+        virtualListenPort = *e.Value
+    }
 	}
-	return virtualHost, virtualPort
+	return &containerEnvVars{
+    VirtualHost: virtualHost,
+    VirtualPort: virtualPort,
+    VirtualType: virtualType,
+    VirtualListenPort: virtualListenPort,
+  }
 }
