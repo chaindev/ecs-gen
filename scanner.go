@@ -112,6 +112,7 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
   virtualPort := vars.VirtualPort
   virtualType := vars.VirtualType
   virtualListenPort := vars.VirtualListenPort
+  virtualAuth := vars.VirtualAuth
 
 	if virtualHost == "" {
 		return nil, errors.New("[" + *cd.Name + "] VIRTUAL_HOST environment variable not found. skipping")
@@ -131,12 +132,19 @@ func (s *scanner) extractContainer(t *ecs.Task, cd *ecs.ContainerDefinition) (*c
 	if virtualListenPort == "" {
     virtualListenPort = "80"
   }
+
+  auth := false
+	if virtualAuth == "true" {
+    auth = true
+  }
+
 	return &container{
-		Host:    virtualHost,
-		Port:    port,
-    Type:    virtualType,
-    ListenPort:    virtualListenPort,
-		Address: s.idAddressMap[*t.ContainerInstanceArn],
+		Host:       virtualHost,
+		Port:       port,
+    Type:       virtualType,
+    ListenPort: virtualListenPort,
+    Auth:       auth,
+		Address:    s.idAddressMap[*t.ContainerInstanceArn],
 	}, nil
 }
 
@@ -154,6 +162,8 @@ func extractVars(env []*ecs.KeyValuePair) (*containerEnvVars) {
 	virtualPort := ""
 	virtualType := ""
 	virtualListenPort := ""
+	virtualAuth := ""
+
 	for _, e := range env {
     envVarName := strings.ToLower(*e.Name)
     switch {
@@ -165,6 +175,8 @@ func extractVars(env []*ecs.KeyValuePair) (*containerEnvVars) {
         virtualType = *e.Value
       case envVarName == "virtual_listen_port":
         virtualListenPort = *e.Value
+      case envVarName == "virtual_auth":
+        virtualAuth = *e.Value
     }
 	}
 	return &containerEnvVars{
@@ -172,5 +184,6 @@ func extractVars(env []*ecs.KeyValuePair) (*containerEnvVars) {
     VirtualPort: virtualPort,
     VirtualType: virtualType,
     VirtualListenPort: virtualListenPort,
+    VirtualAuth: virtualAuth,
   }
 }

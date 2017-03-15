@@ -21,6 +21,7 @@ type container struct {
 	ListenPort string
 	Address    string
   Type       string
+  Auth       bool
 }
 
 type metadata struct {
@@ -34,6 +35,7 @@ type containerEnvVars struct {
   VirtualPort       string
   VirtualType       string
   VirtualListenPort string
+  VirtualAuth       string
 }
 
 var (
