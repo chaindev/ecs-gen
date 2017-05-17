@@ -5,7 +5,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
@@ -55,7 +54,9 @@ func (s *scanner) makeIDAddressMap() (map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		instances[*containerInstances[i].ContainerInstanceArn] = *instance.PrivateIpAddress
+    if instance.PrivateIpAddress != nil {
+			instances[*containerInstances[i].ContainerInstanceArn] = *instance.PrivateIpAddress
+    }
 	}
 	return instances, nil
 }
